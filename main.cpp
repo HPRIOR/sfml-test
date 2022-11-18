@@ -60,9 +60,6 @@ public:
 
     virtual shared_ptr<sf::Shape> getShape() = 0;
 
-    virtual sf::Text getText() = 0;
-
-
 };
 
 class Rectangle : public Shape {
@@ -72,11 +69,10 @@ public:
     float x, y, sx, sy, w, h;
     Colour colour;
     sf::RectangleShape shape;
-    sf::Text text;
 
     Rectangle() = default;;
 
-    Rectangle(string &s, sf::Font &font) {
+    Rectangle(string &s) {
         vector<string> configSplit = split(s, ' ');
         string nameStr = configSplit[1];
         this->name = nameStr;
@@ -91,15 +87,9 @@ public:
         this->shape = sf::RectangleShape(vec2);
         this->shape.setFillColor(sf::Color(colour.r, colour.g, colour.b));
         this->shape.setPosition(x, y);
-        sf::Text text(this->name, font, 24);
-        text.setPosition(x + (w / 2), y + h / 2);
-        this->text = text;
 
     };
 
-    sf::Text getText() override {
-        return this->text;
-    }
 
     void render() override {
         cout << "implements render" << endl;
@@ -136,11 +126,10 @@ public:
     float x, y, sx, sy, r;
     Colour colour;
     sf::CircleShape shape;
-    sf::Text text;
 
     Circle() = default;;
 
-    explicit Circle(string &s, sf::Font &font) {
+    explicit Circle(string &s) {
         vector<string> configSplit = split(s, ' ');
         string nameStr = configSplit[1];
         this->name = nameStr;
@@ -153,18 +142,12 @@ public:
         this->shape = sf::CircleShape(r);
         this->shape.setFillColor(sf::Color(colour.r, colour.g, colour.b));
         this->shape.setPosition(x, y);
-        sf::Text text(this->name, font, 24);
-        text.setPosition(x, y);
-        this->text = text;
     };
 
     void render() override {
         cout << "override render" << endl;
     }
 
-    sf::Text getText() override {
-        return this->text;
-    }
 
     void move(int maxW, int maxH) override {
         if (this->x <= 0) {
@@ -223,15 +206,15 @@ public:
 };
 
 
-Config getConfig(sf::Font &font) {
+Config getConfig() {
     ifstream file;
-    file.open("/Users/harryprior/Code/sfml/resources/config.txt");
+    file.open("/home/harry/Code/sfml-test/resources/config.txt");
     if (!file.is_open()) {
         cout << "Unable to open the file." << endl;
         throw exception();
     }
 
-    WindowCfg windowConf;
+    WindowCfg windowConf{};
     FontCfg fontConf;
     vector<shared_ptr<Shape>> shapes;
     string line;
@@ -244,13 +227,13 @@ Config getConfig(sf::Font &font) {
         }
         if (line.contains("Rectangle")) {
             // push config to rect config
-            Rectangle r = Rectangle(line, font);
+            Rectangle r = Rectangle(line);
             shared_ptr<Shape> shape = make_shared<Rectangle>(r);
             shapes.push_back(shape);
         }
         if (line.contains("Circle")) {
             // push config to circle config
-            Circle c = Circle(line, font);
+            Circle c = Circle(line);
             shared_ptr<Shape> shape = make_shared<Circle>(c);
             shapes.push_back(shape);
         }
@@ -262,20 +245,15 @@ Config getConfig(sf::Font &font) {
 
 
 int main() {
-    sf::Font myFont;
-    if (!myFont.loadFromFile("/Users/harryprior/Code/sfml/resources/fonts/OpenSans-Regular.ttf")) {
-        cerr << "could not load font" << endl;
-        exit(-1);
-    }
 
-    Config config = getConfig(myFont);
+    Config config = getConfig();
 
 
     sf::RenderWindow window(
             sf::VideoMode(config.windowCfg.width, config.windowCfg.height),
             "shapes");
 
-    window.setFramerateLimit(60);
+    window.setFramerateLimit(1000);
 
     vector<shared_ptr<Shape>> shapes = config.shapes;
 
@@ -289,11 +267,9 @@ int main() {
         window.clear(sf::Color::Black);
         // draw things here
         for (auto &s: shapes) {
-//            s->move(config.windowCfg.width, config.windowCfg.height);
+            s->move(config.windowCfg.width, config.windowCfg.height);
             shared_ptr<sf::Shape> shape = s->getShape();
-            sf::Text t = s->getText();
             window.draw(*shape);
-            window.draw(t);
         }
 
         window.display();
